@@ -18,17 +18,27 @@ def create_table(configs: dict):
                                       database=configs.get('database'))
         cursor = connection.cursor()
 
-        query = """
+        delete_query = """
+        DROP TABLE topic_book;
+        DROP TABLE book;
+        DROP TABLE topic;
+        DROP TABLE author;
+        """
+
+        cursor.execute(delete_query)
+        connection.commit()
+
+        create_query = """
         CREATE TABLE author(
             id SERIAL PRIMARY KEY,
-            full_name VARCHAR(100) UNIQUE NOT NULL
+            full_name VARCHAR(200) UNIQUE NOT NULL
         );
         CREATE TABLE book(
             id SERIAL PRIMARY KEY,
-            title VARCHAR(100) UNIQUE NOT NULL,
+            title VARCHAR(250) UNIQUE NOT NULL,
             author_id INTEGER NOT NULL,
             page_count INTEGER NOT NULL,
-            file_id VARCHAR(20) NOT NULL,
+            file_id VARCHAR(100) NOT NULL,
             released_year INT2 NOT NULL,
             date_create DATE NOT NULL DEFAULT CURRENT_DATE,
             FOREIGN KEY (author_id) REFERENCES author(id)
@@ -46,7 +56,7 @@ def create_table(configs: dict):
         );
         """
 
-        cursor.execute(query)
+        cursor.execute(create_query)
         connection.commit()
 
 
