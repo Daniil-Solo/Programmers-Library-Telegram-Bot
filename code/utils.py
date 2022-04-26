@@ -265,4 +265,24 @@ def find_book_in_db_by_keywords(keywords: list) -> list:
     return result
 
 
+def find_last_books() -> list:
+    configs = get_configs()
+    connection = psycopg2.connect(user=configs.get('user'),
+                                  password=configs.get('password'),
+                                  host=configs.get('host'),
+                                  port=configs.get('port'),
+                                  database=configs.get('database'))
+    cursor = connection.cursor()
 
+    get_query = f"""
+        SELECT title, id
+        FROM book
+        ORDER BY date_create DESC
+        LIMIT 10
+        """
+    cursor.execute(get_query)
+    result = cursor.fetchall()
+
+    connection.close()
+    cursor.close()
+    return result

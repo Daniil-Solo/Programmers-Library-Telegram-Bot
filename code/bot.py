@@ -84,6 +84,9 @@ def answer_callback(callback):
             text="Просто введи ключевые слова через запятую и я постараюсь найти подходящую книгу"
         )
         bot.register_next_step_handler(message, find_by_keywords)
+    elif callback.data == "show_last":
+        result = find_last_books()
+        show_result(result, callback.message)
     elif callback.data.startswith("book_id"):
         book_id = callback.data.strip("book_id")
         file_id = get_file_id(int(book_id))[0]
