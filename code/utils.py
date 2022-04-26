@@ -8,15 +8,13 @@ def get_configs() -> dict:
     return result
 
 
-def save_book(book_info: dict):
+def save_book(book_info: str):
     book_dict = yaml.load(book_info, Loader=yaml.FullLoader)
     book_dict["title"] = book_dict["file_name"].replace('.pdf', '')
     items = [item.strip() for item in book_dict['caption'].split(',')]
     book_dict["author"] = items[0]
     book_dict["released_year"] = int(items[-1])
     topics = items[1:-1]
-    print(items)
-    print(topics)
     book_dict["author_id"] = get_or_create_author_id(book_dict["author"])
     book_id = get_and_create_book_id(book_dict)
     topic_id_list = get_and_create_topic_id_list(topics)
@@ -156,3 +154,115 @@ def create_topic_book_relation(book_id: int, topic_id_list: list) -> None:
 
     connection.close()
     cursor.close()
+
+
+def get_file_id(book_id: int) -> tuple:
+    configs = get_configs()
+    connection = psycopg2.connect(user=configs.get('user'),
+                                  password=configs.get('password'),
+                                  host=configs.get('host'),
+                                  port=configs.get('port'),
+                                  database=configs.get('database'))
+    cursor = connection.cursor()
+
+    get_query = f"""
+        SELECT file_id
+        FROM book
+        WHERE id = {book_id}
+        """
+    cursor.execute(get_query)
+    result = cursor.fetchone()
+
+    connection.close()
+    cursor.close()
+    return result
+
+
+def find_book_in_db_by_title(text: str) -> list:
+    configs = get_configs()
+    connection = psycopg2.connect(user=configs.get('user'),
+                                  password=configs.get('password'),
+                                  host=configs.get('host'),
+                                  port=configs.get('port'),
+                                  database=configs.get('database'))
+    cursor = connection.cursor()
+
+    get_query = f"""
+    SELECT title, id
+    FROM book
+    WHERE title ILIKE '%{text}%'
+    """
+    cursor.execute(get_query)
+    result = cursor.fetchall()
+
+    connection.close()
+    cursor.close()
+    return result
+
+
+def find_book_in_db_by_author(text: str) -> list:
+    configs = get_configs()
+    connection = psycopg2.connect(user=configs.get('user'),
+                                  password=configs.get('password'),
+                                  host=configs.get('host'),
+                                  port=configs.get('port'),
+                                  database=configs.get('database'))
+    cursor = connection.cursor()
+
+    get_query = f"""
+        SELECT book.title, book.id
+        FROM book
+        INNER JOIN author
+        ON book.author_id = author.id
+        WHERE author.full_name ILIKE '%{text}%'
+        """
+    cursor.execute(get_query)
+    result = cursor.fetchall()
+
+    connection.close()
+    cursor.close()
+    return result
+
+
+def find_book_in_db_by_keywords(keywords: list) -> list:
+    configs = get_configs()
+    connection = psycopg2.connect(user=configs.get('user'),
+                                  password=configs.get('password'),
+                                  host=configs.get('host'),
+                                  port=configs.get('port'),
+                                  database=configs.get('database'))
+    cursor = connection.cursor()
+
+    topics = set()
+    for key in keywords:
+        check_query = f"""
+            SELECT id
+            FROM topic
+            WHERE name ILIKE '%{key}%'
+            """
+        cursor.execute(check_query)
+        try:
+            topic_id = str(cursor.fetchone()[0])
+        except TypeError:
+            continue
+        topics.add(topic_id)
+
+    result = []
+    if topics:
+        get_query = f"""
+        SELECT DISTINCT book.title, book.id
+        FROM book
+        INNER JOIN topic_book
+        ON book.id = topic_book.book_id
+        WHERE topic_book.topic_id IN ({', '.join(list(topics))}) 
+        """
+
+        cursor.execute(get_query)
+        result = cursor.fetchall()
+
+    connection.close()
+    cursor.close()
+    return result
+
+
+
