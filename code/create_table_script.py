@@ -1,11 +1,5 @@
 import psycopg2
-import yaml
-
-
-def get_configs() -> dict:
-    with open('configs.yaml') as fh:
-        result = yaml.load(fh, Loader=yaml.FullLoader)
-    return result
+from utils import get_configs
 
 
 def create_table(configs: dict):
@@ -37,7 +31,6 @@ def create_table(configs: dict):
             id SERIAL PRIMARY KEY,
             title VARCHAR(250) UNIQUE NOT NULL,
             author_id INTEGER NOT NULL,
-            page_count INTEGER NOT NULL,
             file_id VARCHAR(100) NOT NULL,
             released_year INT2 NOT NULL,
             date_create DATE NOT NULL DEFAULT CURRENT_DATE,
